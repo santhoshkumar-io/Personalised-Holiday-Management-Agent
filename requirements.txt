@@ -3,3 +3,4 @@ autogen-ext[openai]
 dotenv
 pydantic
 python-dotenv
+-e .
