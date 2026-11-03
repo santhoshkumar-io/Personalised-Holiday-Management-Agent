@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Holiday Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Holiday Planner home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" fill="currentColor"/></svg>
+      </span>
+      <span>Holiday Planner</span>
+    </a>
+    <button id="new-trip" class="btn-ghost" type="button" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      New trip
+    </button>
+  </header>
+
+  <!-- ============ Landing: one big prompt ============ -->
+  <main id="landing" class="landing">
+    <div class="hero">
+      <div class="hero-avatars" aria-hidden="true">
+        <span class="avatar planner">P</span>
+        <span class="avatar researcher">R</span>
+      </div>
+      <h1>Hey! Where are we going?</h1>
+      <p class="hero-sub">Tell me about your dream trip. My planner and researcher will put together a day-by-day plan for you.</p>
+
+      <form id="hero-form" class="composer composer-hero" autocomplete="off">
+        <textarea id="hero-input" rows="2" placeholder="A week in Nagaland with friends, mostly hiking and local food…" aria-label="Describe your trip"></textarea>
+
+        <div class="composer-bar">
+          <div class="pills">
+            <label class="pill">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <select id="opt-days" aria-label="Trip length">
+                <option value="">Any length</option>
+                <option>3 days</option>
+                <option>5 days</option>
+                <option>7 days</option>
+                <option>10 days</option>
+                <option>14 days</option>
+              </select>
+            </label>
+            <label class="pill">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <select id="opt-travellers" aria-label="Who is travelling">
+                <option value="">Anyone</option>
+                <option>Solo</option>
+                <option>Couple</option>
+                <option>Friends</option>
+                <option>Family</option>
+              </select>
+            </label>
+            <label class="pill">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v12H3z M3 11h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="16.5" cy="15" r="1.5" fill="currentColor"/></svg>
+              <select id="opt-budget" aria-label="Budget">
+                <option value="">Any budget</option>
+                <option>Budget</option>
+                <option>Mid-range</option>
+                <option>Luxury</option>
+              </select>
+            </label>
+          </div>
+          <button class="send-btn" type="submit" aria-label="Plan my trip">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </form>
+
+      <p class="suggest-label">Or try one of these</p>
+      <div class="suggestions">
+        <button type="button" class="suggestion" data-prompt="Plan a 7-day trip to Nagaland with friends. We love hiking, tribal culture and trying local food.">🏔️ A week in Nagaland with friends</button>
+        <button type="button" class="suggestion" data-prompt="Plan a relaxing 5-day beach holiday in Goa for a couple on a mid-range budget.">🏖️ 5 lazy days in Goa</button>
+        <button type="button" class="suggestion" data-prompt="Plan a 10-day budget backpacking trip through Vietnam, starting in Hanoi and ending in Ho Chi Minh City.">🎒 Backpacking Vietnam on a budget</button>
+        <button type="button" class="suggestion" data-prompt="Plan a 4-day family trip to Kerala with kids, including the backwaters and a hill station.">🌴 Kerala with the kids</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ Chat + trip panel ============ -->
+  <main id="workspace" class="workspace" hidden>
+    <section class="chat" aria-label="Conversation">
+      <ol id="thread" class="thread" aria-live="polite"></ol>
+
+      <form id="chat-form" class="composer composer-chat" autocomplete="off">
+        <textarea id="chat-input" rows="1" placeholder="Ask for changes, like “make day 3 more relaxed”…" aria-label="Message"></textarea>
+        <button class="send-btn" type="submit" aria-label="Send">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </form>
+    </section>
+
+    <aside class="trip" aria-label="Your trip">
+      <div class="trip-cover">
+        <span class="trip-kicker">Your trip</span>
+        <h2 id="trip-title">Planning…</h2>
+        <div id="trip-tags" class="trip-tags"></div>
+      </div>
+
+      <div id="trip-empty" class="trip-empty">
+        <div class="skeleton"></div>
+        <div class="skeleton short"></div>
+        <div class="skeleton"></div>
+        <p>Your itinerary will show up here once the agents agree on a plan.</p>
+      </div>
+
+      <article id="trip-plan" class="trip-plan md" hidden></article>
+    </aside>
+  </main>
+
+  <template id="typing-tpl">
+    <li class="msg agent typing-row">
+      <span class="avatar planner" aria-hidden="true">P</span>
+      <div class="bubble typing">
+        <span class="typing-text">Planner and researcher are on it</span>
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="typing-time">0s</span>
+      </div>
+    </li>
+  </template>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const landing = $("landing"), workspace = $("workspace");
+    const thread = $("thread"), heroInput = $("hero-input"), chatInput = $("chat-input");
+    const tripTitle = $("trip-title"), tripTags = $("trip-tags");
+    const tripEmpty = $("trip-empty"), tripPlan = $("trip-plan");
+    const newTripBtn = $("new-trip");
+
+    const AGENTS = {
+      Holiday_Planner: { name: "Planner", cls: "planner" },
+      Holiday_Researcher: { name: "Researcher", cls: "researcher" },
+    };
+
+    let busy = false;
+    let currentPlan = "";   // last planner reply, used as context for follow-ups
+
+    /* ---------- helpers ---------- */
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    function md(text) {
+      const cleaned = text.replace(/\bTERMINATE\b\.?/g, "").trim();
+      if (window.marked && window.DOMPurify) return DOMPurify.sanitize(marked.parse(cleaned));
+      const d = document.createElement("div");
+      d.textContent = cleaned;
+      return d.innerHTML.replace(/\n/g, "<br>");
+    }
+
+    function scrollToBottom() {
+      thread.scrollTo({ top: thread.scrollHeight, behavior: "smooth" });
+    }
+
+    function addUserMessage(text) {
+      const li = document.createElement("li");
+      li.className = "msg user";
+      const b = document.createElement("div");
+      b.className = "bubble";
+      b.textContent = text;
+      li.appendChild(b);
+      thread.appendChild(li);
+      scrollToBottom();
+    }
+
+    function addAgentMessage(source, content) {
+      const a = AGENTS[source] || { name: source, cls: "planner" };
+      const li = document.createElement("li");
+      li.className = `msg agent ${a.cls}`;
+      li.innerHTML = `
+        <span class="avatar ${a.cls}" aria-hidden="true">${a.name[0]}</span>
+        <div class="bubble-wrap">
+          <span class="who"></span>
+          <div class="bubble md"></div>
+        </div>`;
+      li.querySelector(".who").textContent = a.name;
+      li.querySelector(".bubble").innerHTML = md(content);
+      thread.appendChild(li);
+      scrollToBottom();
+    }
+
+    function addError(text) {
+      const li = document.createElement("li");
+      li.className = "msg agent error";
+      li.innerHTML = `<span class="avatar" aria-hidden="true">!</span><div class="bubble"></div>`;
+      li.querySelector(".bubble").textContent = `Sorry, something went wrong: ${text}`;
+      thread.appendChild(li);
+      scrollToBottom();
+    }
+
+    function showTyping() {
+      const node = $("typing-tpl").content.firstElementChild.cloneNode(true);
+      thread.appendChild(node);
+      scrollToBottom();
+      const timeEl = node.querySelector(".typing-time");
+      const textEl = node.querySelector(".typing-text");
+      const phrases = ["Planner and researcher are on it", "Researching the destination", "Sketching out the days", "Checking what's worth your time"];
+      const start = Date.now();
+      const timer = setInterval(() => {
+        const s = Math.round((Date.now() - start) / 1000);
+        timeEl.textContent = `${s}s`;
+        textEl.textContent = phrases[Math.floor(s / 8) % phrases.length];
+      }, 1000);
+      return () => { clearInterval(timer); node.remove(); };
+    }
+
+    function setTripMeta(prompt) {
+      const days = $("opt-days").value, who = $("opt-travellers").value, budget = $("opt-budget").value;
+      // A short title from the first line of the prompt
+      const title = prompt.split(/[.\n]/)[0].replace(/^(plan|i am planning|i'm planning)\s+/i, "");
+      tripTitle.textContent = title.charAt(0).toUpperCase() + title.slice(1, 70) + (title.length > 70 ? "…" : "");
+      tripTags.innerHTML = "";
+      [days, who, budget].filter(Boolean).forEach((t) => {
+        const s = document.createElement("span");
+        s.className = "tag";
+        s.textContent = t;
+        tripTags.appendChild(s);
+      });
+    }
+
+    function showPlan(content) {
+      currentPlan = content;
+      tripEmpty.hidden = true;
+      tripPlan.hidden = false;
+      tripPlan.innerHTML = md(content);
+    }
+
+    function buildFirstPrompt(text) {
+      const extras = [];
+      if ($("opt-days").value) extras.push(`Trip length: ${$("opt-days").value}.`);
+      if ($("opt-travellers").value) extras.push(`Travelling as: ${$("opt-travellers").value.toLowerCase()}.`);
+      if ($("opt-budget").value) extras.push(`Budget: ${$("opt-budget").value.toLowerCase()}.`);
+      return [text, ...extras, "Please research the destination and plan a day-by-day itinerary."].join(" ");
+    }
+
+    function buildFollowUp(text) {
+      // The server starts each request fresh, so send the current plan along.
+      if (!currentPlan) return buildFirstPrompt(text);
+      return `Here is the current holiday plan:\n\n${currentPlan.replace(/\bTERMINATE\b/g, "")}\n\nThe traveller asks for this change: ${text}\n\nPlease update the plan accordingly and give the full revised itinerary.`;
+    }
+
+    /* ---------- talking to the API ---------- */
+    async function send(displayText, prompt) {
+      if (busy) return;
+      busy = true;
+      document.body.classList.add("is-busy");
+      addUserMessage(displayText);
+      const stopTyping = showTyping();
+
+      try {
+        const res = await fetch("/plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: prompt, source: "User" }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(body.detail || `request failed (${res.status})`);
+
+        stopTyping();
+        const replies = (body.messages || []).filter((m) => m.source !== "User");
+        if (!replies.length) throw new Error("the agents didn't reply");
+
+        // Reveal replies one at a time so it reads like a conversation.
+        for (const m of replies) {
+          addAgentMessage(m.source, m.content);
+          await sleep(350);
+        }
+        const lastPlan = [...replies].reverse().find((m) => m.source === "Holiday_Planner") || replies[replies.length - 1];
+        showPlan(lastPlan.content);
+      } catch (err) {
+        stopTyping();
+        addError(err.message);
+      } finally {
+        busy = false;
+        document.body.classList.remove("is-busy");
+        chatInput.focus();
+      }
+    }
+
+    function startTrip(text) {
+      text = text.trim();
+      if (!text) { heroInput.focus(); return; }
+      landing.hidden = true;
+      workspace.hidden = false;
+      newTripBtn.hidden = false;
+      setTripMeta(text);
+      send(text, buildFirstPrompt(text));
+    }
+
+    /* ---------- events ---------- */
+    $("hero-form").addEventListener("submit", (e) => { e.preventDefault(); startTrip(heroInput.value); });
+
+    document.querySelectorAll(".suggestion").forEach((btn) =>
+      btn.addEventListener("click", () => { heroInput.value = btn.dataset.prompt; startTrip(btn.dataset.prompt); })
+    );
+
+    $("chat-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text || busy) return;
+      chatInput.value = "";
+      autoGrow(chatInput);
+      send(text, buildFollowUp(text));
+    });
+
+    // Enter sends, Shift+Enter adds a new line
+    [heroInput, chatInput].forEach((el) => {
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); el.form.requestSubmit(); }
+      });
+      el.addEventListener("input", () => autoGrow(el));
+    });
+
+    function autoGrow(el) {
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 180) + "px";
+    }
+
+    newTripBtn.addEventListener("click", () => {
+      if (busy) return;
+      thread.innerHTML = "";
+      currentPlan = "";
+      tripPlan.hidden = true;
+      tripEmpty.hidden = false;
+      heroInput.value = "";
+      workspace.hidden = true;
+      landing.hidden = false;
+      newTripBtn.hidden = true;
+      heroInput.focus();
+    });
+  </script>
+</body>
+</html>

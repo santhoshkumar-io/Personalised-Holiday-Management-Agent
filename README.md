@@ -14,3 +14,7 @@ Install required packages
 ```
 pip install -r requirements.txt
 ```
+Run the FastAPI Application
+```bash
+uvicorn main:app --reload
+```
